@@ -134,15 +134,14 @@
         let currentStep = 0;
         let userName = "";
         let userAnswers = {};
-        let partnerData = null; // Person A
-        let partnerDataB = null; // Person B (If viewing a permanent link)
+        let partnerData = null; 
+        let partnerDataB = null; 
 
         window.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
             const p1Data = urlParams.get('p1');
             const p2Data = urlParams.get('p2');
 
-            // If link contains BOTH p1 and p2 -> Directly load permanent report
             if (p1Data && p2Data) {
                 try {
                     partnerData = JSON.parse(decodeURIComponent(escape(atob(p1Data))));
@@ -153,7 +152,6 @@
                 } catch(e) { console.error("Invalid Permanent Link", e); }
             }
 
-            // If link contains only p1 -> Person B takes quiz
             if (p1Data) {
                 try {
                     partnerData = JSON.parse(decodeURIComponent(escape(atob(p1Data))));
@@ -162,7 +160,6 @@
                 } catch(e) { console.error("Invalid Partner Link", e); }
             }
 
-            // Check local draft
             const savedDraft = localStorage.getItem(STORAGE_KEY);
             if (savedDraft) {
                 try {
