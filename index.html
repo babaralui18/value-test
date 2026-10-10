@@ -29,12 +29,381 @@
 
     <main class="max-w-2xl mx-auto px-4 mt-6">
 
-        <!-- Partner Banner (If opened via shared link) -->
+        <!-- Partner Banner (When B fills after A) -->
         <div id="partner-banner" class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 mb-6 hidden">
             <p class="text-indigo-900 text-sm font-semibold flex items-center gap-2">
                 <span class="text-lg">💌</span> 您正在填寫由 <span id="partner-name-display" class="underline text-indigo-700"></span> 分享的對比測驗！
             </p>
             <p class="text-slate-500 text-xs mt-1">完成後即可直接在螢幕上查看你們兩人的價值觀契合度報告。</p>
+        </div>
+
+        <!-- Resume Notice -->
+        <div id="resume-card" class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6 hidden">
+            <h3 class="text-amber-900 font-bold text-base mb-1">偵測到未完成的紀錄</h3>
+            <p id="resume-info" class="text-amber-700 text-xs mb-4"></p>
+            <div class="flex gap-3">
+                <button onclick="resumeQuiz()" class="w-1/2 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 rounded-xl text-sm transition">繼續填寫</button>
+                <button onclick="clearDraftAndStartNew()" class="w-1/2 bg-white hover:bg-amber-100 text-amber-800 font-semibold py-2.5 rounded-xl text-sm border border-amber-300 transition">重新開始</button>
+            </div>
+        </div>
+
+        <!-- Step 0: Welcome & Name Input -->
+        <div id="intro-card" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <h2 class="text-2xl font-bold text-slate-900 mb-3">測驗說明</h2>
+            <p class="text-slate-600 mb-4 leading-relaxed text-sm">
+                本測驗包含 <strong>15 大人生面向</strong>、共 <strong>75 道題目</strong>。<br>
+                填寫完成後可生成專屬連結發送給伴侶/朋友，完成雙人線上比對！
+            </p>
+            <div class="mb-6">
+                <label for="user-name" class="block text-sm font-semibold text-slate-700 mb-2">請輸入您的姓名或暱稱：</label>
+                <input type="text" id="user-name" placeholder="例如：Alex" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+            </div>
+            <button onclick="startQuiz()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-xl transition shadow-sm">開始進行測驗</button>
+        </div>
+
+        <!-- Quiz Container -->
+        <div id="quiz-container" class="hidden">
+            <div class="flex justify-between items-center mb-4 bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                <div id="dimension-title" class="text-base font-bold text-indigo-700"></div>
+                <button onclick="restartConfirm()" class="text-xs text-slate-400 hover:text-red-500 transition">重新開始</button>
+            </div>
+            
+            <form id="quiz-form" class="space-y-5"></form>
+            
+            <div class="flex justify-between items-center mt-8 gap-4">
+                <button id="prev-btn" onclick="changeStep(-1)" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-3 rounded-xl transition hidden">上一面向</button>
+                <button id="next-btn" onclick="changeStep(1)" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition shadow-sm">下一面向</button>
+            </div>
+        </div>
+
+        <!-- Step Final A: Single User Finish (Generate Share Link) -->
+        <div id="single-result-card" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hidden text-center">
+            <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🔗</div>
+            <h2 class="text-2xl font-bold text-slate-900 mb-2">測驗完成！</h2>
+            <p class="text-slate-600 text-sm mb-6">請複製下方專屬對比邀請連結發送給伴侶/朋友，對方填寫後即可直接看到比對報告！</p>
+
+            <button onclick="copyShareLink()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-xl transition shadow-sm mb-3">複製對比邀請連結</button>
+            <button onclick="downloadJSON()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl transition border border-slate-300 text-xs">備份 JSON 檔案</button>
+        </div>
+
+        <!-- Step Final B: Comparison Result (Permanent View) -->
+        <div id="compare-result-card" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hidden">
+            <div class="text-center mb-6">
+                <span class="text-xs font-bold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">雙人價值觀對比報告</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-2"><span id="p1-name-tag"></span> × <span id="p2-name-tag"></span></h2>
+                <div class="mt-4 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                    <div class="text-xs text-indigo-600 font-semibold">整體價值觀相似度</div>
+                    <div id="match-score" class="text-4xl font-extrabold text-indigo-700 my-1">0%</div>
+                    <div id="match-desc" class="text-xs text-slate-600"></div>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-slate-800 text-sm mb-3">15 大面向契合度分析</h3>
+            <div id="dimension-breakdown" class="space-y-3 mb-6"></div>
+
+            <div class="space-y-2">
+                <button onclick="copyPermanentReportLink()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition shadow-sm text-sm">複製「雙人永久紀念連結」</button>
+                <button onclick="copyCombinedPromptForAI()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition shadow-sm text-sm">一鍵複製「AI 深度分析 Prompt」</button>
+            </div>
+            <p class="text-[11px] text-slate-400 text-center mt-3">點擊「永久紀念連結」可隨時重溫報告；貼上 Prompt 給 AI 可獲取磨合建議。</p>
+        </div>
+
+    </main>
+
+    <script>
+        const STORAGE_KEY = "values_quiz_draft_v3";
+
+        const dimensions = [
+            { name: "1. 人生觀", questions: ["人生的主要意義在於追求個人的自我實現與快樂。", "面對未知的未來，我傾向順其自然而非精確規劃。", "即使過程充滿痛苦，只要目標有價值就值得堅持。", "我認為人生的成功很大程度取決於個人努力而非運氣。", "生命短暫，當下的體驗比未來的長遠目標更重要。"] },
+            { name: "2. 金錢觀", questions: ["延遲享樂（儲蓄投資）比即時滿足生活品質更重要。", "只要能力允許，花錢購買時間與便利是非常值得的。", "金錢能帶來絕大多數的安全感與自由。", "借貸（如房貸、車貸）是實現理想生活的正常工具。", "伴侶之間應該建立完全公開且共享的財務帳戶。"] },
+            { name: "3. 道德與是非觀", questions: ["為了保護珍視的人，有時違背客觀原則是可以接受的。", "事情的對錯取決於結果是否良好，而非過程是否合乎規則。", "即使沒有人知道，我也會嚴格遵守自己的道德底線。", "我相信「惡有惡報，善有善報」的道德因果律。", "在重大道德議題上，我不輕易妥協自己的立場。"] },
+            { name: "4. 社會與公平觀", questions: ["社會應該優先保障弱者，即使這意味著犧牲部分個人的效率。", "個人財富的差異主要是能力與努力的體現，社會不應過度介入再分配。", "我願意為了群體利益或社會正義做出個人時間或金錢的奉獻。", "法規與秩序比個人自由更能維護社會的長治久安。", "任何形式的歧視與不平等都必須被積極糾正。"] },
+            { name: "5. 家庭觀", questions: ["原生家庭的期待與需求應該優先於個人的部分生涯選擇。", "成立屬於自己的家庭（如結婚、育兒）是我人生重要的目標。", "與長輩意見不合時，我傾向順從以維持家庭和諧。", "逢年過節與家庭聚會是維系情感不可或缺的義務。", "伴侶與自己的新家庭應該高於原生家庭的干涉與需求。"] },
+            { name: "6. 友情與人際觀", questions: ["知心朋友不在多，兩三個能深刻交流的就夠了。", "朋友之間應該坦誠相待，即使實話可能令人難過。", "在人際關係中，保持適當距離比密切互動更能維持長久。", "當朋友做出不合情理的事時，我會主動指出而不是無條件支持。", "拓展人脈與社交圈對事業與生活有不可或缺的價值。"] },
+            { name: "7. 工作與事業觀", questions: ["工作只是獲取生活資金的手段，不必追求熱情與天職。", "我願意為了事業突破與成就，犧牲部分個人休閒與休假。", "相較於穩定的工作，我更偏好高風險但高報酬的挑戰。", "下班後的個人時間不應該處理任何工作事務。", "在職場中，獲得同仁與主管的認同對我非常重要。"] },
+            { name: "8. 生活方式與享樂觀", questions: ["生活應該保持規律與秩序，才能維持身心健康的平衡。", "嘗試新鮮、冒險或未知的體驗是生活不可或缺的樂趣。", "相比於擁有很多物質產品，我更重視累積美好的生活體驗（如旅遊、展演）。", "在極端忙碌後，我需要完全獨處來恢復精力，而非社交。", "對生活細節（如居住環境、飲食質感）有高標準的追求是必要的。"] },
+            { name: "9. 自由與個人界線", questions: ["即使在最親密關係中，每個人也應保有絕對私密的情感與空間。", "我很難對別人的請求說「不」，經常因此承擔額外負擔。", "他人對我的評價與眼光會顯著影響我的選擇與心情。", "我習慣獨立解決問題，極少主動尋求他人的協助。", "當他人侵犯我的個人界線時，我會當場明確表達拒絕。"] },
+            { name: "10. 情緒與衝突處理", questions: ["當情緒高漲時，我傾向先冷靜獨處，而非立刻溝通解決。", "在衝突中，我會盡量避免正面爭執，寧可選擇讓步或妥協。", "我能夠敏銳覺察並清楚表達自己當下的情緒狀態。", "當伴侶或朋友情緒低落時，我習慣給予理性建議而非單純傾聽陪伴。", "當與他人意見相左時，我一定要把事情說明白講清楚才會安心。"] },
+            { name: "11. 學習與成長觀", questions: ["人應該終身保持學習，不斷更新自己的知識與技能。", "失敗是寶貴的學習經驗，我不害怕嘗試可能失敗的新事物。", "面對批評時，我能客觀看待並據此改進自我。", "我會定期審視自己的性格與習慣，並積極進行調整改變。", "學習應該有明確的實用目的，而非單純為了興趣。"] },
+            { name: "12. 科技與環境觀", questions: ["科技發展利大於弊，我們應積極抱持擁抱人工智慧等新技術。", "為保護自然環境，我願意犧牲部分生活上的便利與物質享受。", "現代人過度依賴數位產品，應該適度進行「數位斷捨離」。", "人類應優先考慮當代發展，環境永續議題不必過度焦慮。", "科技改變了人類互動的方式，但也削減了真實的人際溫度。"] },
+            { name: "13. 風險與安全觀", questions: ["在做出重大決定前，我會詳細評估所有可能的風險與退路。", "安定與確定性比充滿變化的生活更能帶給我安全感。", "我願意為了可能的高回報而承擔不可預測的風險。", "當計畫趕不上變化時，我能迅速適應並調整心態。", "我經常會為未來尚未發生的潛在危機感到焦慮。"] },
+            { name: "14. 愛情與親密關係觀", questions: ["完美的愛情需要雙方在價值觀與生活習慣上有高度的契合。", "伴侶之間應該毫無保留，不應該有任何秘密。", "即使進入穩定關係，我也需要維持個人的獨立圈子與興趣。", "在親密關係中，儀式感與浪漫表達是不可或缺的要素。", "愛情是需要持續經營與理性溝通的，光靠感覺無法長久。"] },
+            { name: "15. 生命與幸福觀", questions: ["幸福是一種心態，取決於自己如何看待生活，而非客觀條件。", "思考死亡與生命的終點能幫助我規劃現在的生活。", "生命中遭遇的痛苦與挫折都有其獨特的意義與價值。", "幸福的關鍵在於擁有深刻且有意義的人際連結。", "我對自己目前的人生軌跡與現狀感到相當滿意與平靜。"] }
+        ];
+
+        let currentStep = 0;
+        let userName = "";
+        let userAnswers = {};
+        let partnerData = null; // Person A
+        let partnerDataB = null; // Person B (If viewing a permanent link)
+
+        window.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const p1Data = urlParams.get('p1');
+            const p2Data = urlParams.get('p2');
+
+            // If link contains BOTH p1 and p2 -> Directly load permanent report
+            if (p1Data && p2Data) {
+                try {
+                    partnerData = JSON.parse(decodeURIComponent(escape(atob(p1Data))));
+                    partnerDataB = JSON.parse(decodeURIComponent(escape(atob(p2Data))));
+                    document.getElementById("intro-card").classList.add("hidden");
+                    renderPermanentReport();
+                    return;
+                } catch(e) { console.error("Invalid Permanent Link", e); }
+            }
+
+            // If link contains only p1 -> Person B takes quiz
+            if (p1Data) {
+                try {
+                    partnerData = JSON.parse(decodeURIComponent(escape(atob(p1Data))));
+                    document.getElementById("partner-name-display").innerText = partnerData.userName;
+                    document.getElementById("partner-banner").classList.remove("hidden");
+                } catch(e) { console.error("Invalid Partner Link", e); }
+            }
+
+            // Check local draft
+            const savedDraft = localStorage.getItem(STORAGE_KEY);
+            if (savedDraft) {
+                try {
+                    const draftObj = JSON.parse(savedDraft);
+                    if (draftObj.userName && draftObj.userAnswers) {
+                        const count = Object.keys(draftObj.userAnswers).length;
+                        document.getElementById("resume-info").innerText = `使用者：${draftObj.userName}｜已回答 ${count} / 75 題`;
+                        document.getElementById("resume-card").classList.remove("hidden");
+                    }
+                } catch (e) { localStorage.removeItem(STORAGE_KEY); }
+            }
+        });
+
+        function saveProgressToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                userName: userName, currentStep: currentStep, userAnswers: userAnswers
+            }));
+        }
+
+        function resumeQuiz() {
+            const savedDraft = localStorage.getItem(STORAGE_KEY);
+            if (savedDraft) {
+                const draftObj = JSON.parse(savedDraft);
+                userName = draftObj.userName;
+                currentStep = draftObj.currentStep || 0;
+                userAnswers = draftObj.userAnswers || {};
+                document.getElementById("user-name").value = userName;
+                startQuizUI();
+            }
+        }
+
+        function clearDraftAndStartNew() {
+            localStorage.removeItem(STORAGE_KEY);
+            window.location.href = window.location.pathname;
+        }
+
+        function restartConfirm() {
+            if (confirm("確定要重新開始嗎？")) clearDraftAndStartNew();
+        }
+
+        function startQuiz() {
+            const input = document.getElementById("user-name").value.trim();
+            if (!input) { alert("請先輸入您的姓名或暱稱！"); return; }
+            userName = input;
+            saveProgressToStorage();
+            startQuizUI();
+        }
+
+        function startQuizUI() {
+            document.getElementById("resume-card").classList.add("hidden");
+            document.getElementById("intro-card").classList.add("hidden");
+            document.getElementById("quiz-container").classList.remove("hidden");
+            document.getElementById("step-indicator").classList.remove("hidden");
+            document.getElementById("progress-container").classList.remove("hidden");
+            renderStep();
+        }
+
+        function renderStep() {
+            const dim = dimensions[currentStep];
+            document.getElementById("step-indicator").innerText = `面向 ${currentStep + 1} / ${dimensions.length}`;
+            document.getElementById("dimension-title").innerText = dim.name;
+            document.getElementById("progress-bar").style.width = `${((currentStep) / dimensions.length) * 100}%`;
+
+            const form = document.getElementById("quiz-form");
+            form.innerHTML = "";
+
+            dim.questions.forEach((qText, qIdx) => {
+                const gIdx = currentStep * 5 + qIdx + 1;
+                const qKey = `q_${gIdx}`;
+                const selVal = userAnswers[qKey] || null;
+
+                const qCard = document.createElement("div");
+                qCard.className = "bg-white p-5 rounded-xl shadow-sm border border-slate-100";
+                
+                let html = `<p class="font-medium text-slate-800 text-sm mb-4"><span class="text-indigo-600 font-bold mr-1">Q${gIdx}.</span> ${qText}</p><div class="grid grid-cols-5 gap-2 text-center">`;
+                const labels = ["非常不同意", "不同意", "普通", "同意", "非常同意"];
+                
+                for (let i = 1; i <= 5; i++) {
+                    html += `
+                        <div>
+                            <input type="radio" id="${qKey}_${i}" name="${qKey}" value="${i}" class="option-btn hidden" ${selVal == i ? "checked" : ""} onchange="saveAnswer('${qKey}', ${i})">
+                            <label for="${qKey}_${i}" class="block py-2.5 px-1 text-xs border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50 transition leading-tight font-medium text-slate-600">
+                                ${i}<span class="block text-[10px] text-slate-400 mt-1 scale-90 transform">${labels[i-1]}</span>
+                            </label>
+                        </div>`;
+                }
+                html += `</div>`;
+                qCard.innerHTML = html;
+                form.appendChild(qCard);
+            });
+
+            const prevBtn = document.getElementById("prev-btn");
+            const nextBtn = document.getElementById("next-btn");
+            if (currentStep === 0) {
+                prevBtn.classList.add("hidden"); nextBtn.classList.replace("w-1/2", "w-full");
+            } else {
+                prevBtn.classList.remove("hidden"); nextBtn.classList.replace("w-full", "w-1/2");
+            }
+            nextBtn.innerText = currentStep === dimensions.length - 1 ? "完成測驗" : "下一面向";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function saveAnswer(qKey, val) { userAnswers[qKey] = val; saveProgressToStorage(); }
+
+        function changeStep(delta) {
+            if (delta === 1) {
+                for (let i = 0; i < 5; i++) {
+                    const gIdx = currentStep * 5 + i + 1;
+                    if (!userAnswers[`q_${gIdx}`]) { alert(`請回答第 ${gIdx} 題！`); return; }
+                }
+            }
+            currentStep += delta;
+            saveProgressToStorage();
+            if (currentStep >= dimensions.length) showResults(); else renderStep();
+        }
+
+        function generateExportData() {
+            return {
+                userName: userName,
+                answers: Array.from({length: 75}, (_, i) => userAnswers[`q_${i+1}`])
+            };
+        }
+
+        function showResults() {
+            document.getElementById("progress-bar").style.width = "100%";
+            document.getElementById("quiz-container").classList.add("hidden");
+            
+            if (partnerData) {
+                partnerDataB = generateExportData();
+                renderComparison();
+            } else {
+                document.getElementById("single-result-card").classList.remove("hidden");
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function copyShareLink() {
+            const myData = generateExportData();
+            const jsonStr = JSON.stringify(myData);
+            const encodedStr = btoa(unescape(encodeURIComponent(jsonStr)));
+            const shareUrl = `${window.location.origin}${window.location.pathname}?p1=${encodedStr}`;
+
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                alert("專屬對比邀請連結已複製！發送給伴侶/朋友填寫即可看結果。");
+            });
+        }
+
+        function renderComparison() {
+            renderReportCore(partnerData, partnerDataB);
+        }
+
+        function renderPermanentReport() {
+            renderReportCore(partnerData, partnerDataB);
+        }
+
+        function renderReportCore(p1, p2) {
+            document.getElementById("compare-result-card").classList.remove("hidden");
+            document.getElementById("p1-name-tag").innerText = p1.userName;
+            document.getElementById("p2-name-tag").innerText = p2.userName;
+
+            const p1Ans = p1.answers;
+            const p2Ans = p2.answers;
+
+            let totalDiff = 0;
+            const dimBreakdown = dimensions.map((dim, dIdx) => {
+                let dimDiff = 0;
+                for (let i = 0; i < 5; i++) {
+                    const idx = dIdx * 5 + i;
+                    dimDiff += Math.abs(p1Ans[idx] - p2Ans[idx]);
+                }
+                totalDiff += dimDiff;
+                const dimMatchPct = Math.round((1 - (dimDiff / 20)) * 100);
+                return { name: dim.name, diff: dimDiff, pct: dimMatchPct };
+            });
+
+            const totalMatchPct = Math.round((1 - (totalDiff / 300)) * 100);
+            
+            document.getElementById("match-score").innerText = `${totalMatchPct}%`;
+            document.getElementById("match-desc").innerText = totalMatchPct >= 80 ? "價值觀高度契合，擁有堅實的心靈默契！" : totalMatchPct >= 65 ? "大部分核心議題一致，部分面向具備良好的互補性。" : "存在多個深層價值觀分歧，需要更多傾聽與溝通。";
+
+            const container = document.getElementById("dimension-breakdown");
+            container.innerHTML = "";
+            dimBreakdown.forEach(item => {
+                const colorClass = item.pct >= 80 ? "bg-emerald-500" : item.pct >= 60 ? "bg-indigo-500" : "bg-amber-500";
+                const div = document.createElement("div");
+                div.className = "bg-slate-50 p-3 rounded-xl border border-slate-200";
+                div.innerHTML = `
+                    <div class="flex justify-between text-xs font-semibold mb-1">
+                        <span class="text-slate-700">${item.name}</span>
+                        <span class="text-slate-600">${item.pct}% 相似</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                        <div class="${colorClass} h-2 rounded-full" style="width: ${item.pct}%"></div>
+                    </div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function copyPermanentReportLink() {
+            const str1 = btoa(unescape(encodeURIComponent(JSON.stringify(partnerData))));
+            const str2 = btoa(unescape(encodeURIComponent(JSON.stringify(partnerDataB))));
+            const permUrl = `${window.location.origin}${window.location.pathname}?p1=${str1}&p2=${str2}`;
+
+            navigator.clipboard.writeText(permUrl).then(() => {
+                alert("已複製「雙人永久紀念連結」！你們兩人隨時點開此連結都能重溫報告！");
+            });
+        }
+
+        function copyCombinedPromptForAI() {
+            const p1 = partnerData;
+            const p2 = partnerDataB;
+
+            let text = `請幫我們分析以下雙人全方位價值觀測驗結果：\n\n【對象 A：${p1.userName}】\n`;
+            dimensions.forEach((dim, dIdx) => {
+                text += `\n[${dim.name}]\n`;
+                dim.questions.forEach((q, qIdx) => {
+                    text += `Q${dIdx*5+qIdx+1}.${q}: ${p1.answers[dIdx*5+qIdx]}分\n`;
+                });
+            });
+
+            text += `\n--------------------------------\n\n【對象 B：${p2.userName}】\n`;
+            dimensions.forEach((dim, dIdx) => {
+                text += `\n[${dim.name}]\n`;
+                dim.questions.forEach((q, qIdx) => {
+                    text += `Q${dIdx*5+qIdx+1}.${q}: ${p2.answers[dIdx*5+qIdx]}分\n`;
+                });
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert("已成功複製 AI 分析 Prompt！直接貼給 AI 即可發送。");
+            });
+        }
+
+        function downloadJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(generateExportData(), null, 2));
+            const a = document.createElement('a'); a.href = dataStr; a.download = `${userName}_價值觀測驗.json`;
+            document.body.appendChild(a); a.click(); a.remove();
+        }
+    </script>
+</body>
+</html>            <p class="text-slate-500 text-xs mt-1">完成後即可直接在螢幕上查看你們兩人的價值觀契合度報告。</p>
         </div>
 
         <!-- Resume Notice -->
