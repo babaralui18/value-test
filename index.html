@@ -16,9 +16,9 @@
 <body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
 
     <!-- Header -->
-    <header class="bg-indigo-600 text-white py-6 px-4 shadow-md sticky top-0 z-50">
+    <header class="bg-indigo-600 text-white py-4 px-4 shadow-md sticky top-0 z-50">
         <div class="max-w-2xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">雙人全方位價值觀測驗</h1>
+            <h1 class="text-lg md:text-xl font-bold">雙人全方位價值觀測驗</h1>
             <span id="step-indicator" class="text-xs bg-indigo-700 px-3 py-1 rounded-full hidden">面向 1 / 15</span>
         </div>
         <!-- Progress Bar -->
@@ -29,12 +29,22 @@
 
     <main class="max-w-2xl mx-auto px-4 mt-6">
 
+        <!-- Resume Notice (Auto-detected draft) -->
+        <div id="resume-card" class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6 hidden">
+            <h3 class="text-amber-900 font-bold text-base mb-1">偵測到未完成的測驗紀錄</h3>
+            <p id="resume-info" class="text-amber-700 text-xs mb-4">您可以繼續上次的填寫進度，或是清除紀錄重新開始。</p>
+            <div class="flex gap-3">
+                <button onclick="resumeQuiz()" class="w-1/2 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 rounded-xl text-sm transition">繼續上次進度</button>
+                <button onclick="clearDraftAndStartNew()" class="w-1/2 bg-white hover:bg-amber-100 text-amber-800 font-semibold py-2.5 rounded-xl text-sm border border-amber-300 transition">重新開始</button>
+            </div>
+        </div>
+
         <!-- Step 0: Welcome & Name Input -->
         <div id="intro-card" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
             <h2 class="text-2xl font-bold text-slate-900 mb-3">測驗說明</h2>
             <p class="text-slate-600 mb-4 leading-relaxed text-sm">
-                本測驗包含 <strong>15 大人生面向</strong>、共 <strong>75 道題目</strong>，旨在全面了解您的核心價值觀。<br>
-                請根據您真實的想法評分（1分：非常不同意 ～ 5分：非常同意）。完成後可下載 JSON 測驗結果檔。
+                本測驗包含 <strong>15 大人生面向</strong>、共 <strong>75 道題目</strong>。<br>
+                系統會<strong>自動儲存填寫進度</strong>，即使中途關閉瀏覽器也能隨時回來繼續。完成後可下載 JSON 測驗結果檔。
             </p>
             <div class="mb-6">
                 <label for="user-name" class="block text-sm font-semibold text-slate-700 mb-2">請輸入您的姓名或暱稱：</label>
@@ -45,8 +55,12 @@
 
         <!-- Quiz Container -->
         <div id="quiz-container" class="hidden">
-            <div id="dimension-title" class="text-lg font-bold text-indigo-600 mb-4 bg-indigo-50 p-3 rounded-xl border border-indigo-100"></div>
-            <form id="quiz-form" class="space-y-6"></form>
+            <div class="flex justify-between items-center mb-4 bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                <div id="dimension-title" class="text-base font-bold text-indigo-700"></div>
+                <button onclick="restartConfirm()" class="text-xs text-slate-400 hover:text-red-500 transition">重新開始</button>
+            </div>
+            
+            <form id="quiz-form" class="space-y-5"></form>
             
             <div class="flex justify-between items-center mt-8 gap-4">
                 <button id="prev-btn" onclick="changeStep(-1)" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-3 rounded-xl transition hidden">上一面向</button>
@@ -60,22 +74,39 @@
             <h2 class="text-2xl font-bold text-slate-900 mb-2">測驗完成！</h2>
             <p class="text-slate-600 text-sm mb-6">您已順利完成全部 75 道價值觀題目。</p>
 
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-left mb-6 space-y-3">
-                <h3 class="font-bold text-slate-800 text-sm">下一步提示：</h3>
-                <ol class="list-decimal list-inside text-xs text-slate-600 space-y-2 leading-relaxed">
-                    <li>點擊下方按鈕下載您的測驗結果（JSON 檔）。</li>
-                    <li>將此網頁檔提供給另一半／朋友填寫並下載其結果。</li>
-                    <li>將兩人的 JSON 檔案內容複製並發送給 AI，即可獲得深度分析報告！</li>
-                </ol>
+            <div class="space-y-3 mb-6">
+                <!-- Mobile-friendly Blob Download -->
+                <button onclick="downloadJSON()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    下載我的測驗結果 (.json)
+                </button>
+                <button onclick="copyJSONToClipboard()" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold py-3 rounded-xl transition border border-indigo-200 text-sm">複製 JSON 資料至剪貼簿</button>
+                <button onclick="toggleRawData()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium py-2.5 rounded-xl transition text-xs">顯示 / 隱藏 Raw JSON 文字</button>
             </div>
 
-            <button onclick="downloadJSON()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 rounded-xl transition shadow-sm mb-3">下載我的測驗結果 (.json)</button>
-            <button onclick="copyJSONToClipboard()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl transition border border-slate-300 text-sm">複製 JSON 資料至剪貼簿</button>
+            <!-- Fallback Textarea for Strict Mobile Browsers -->
+            <div id="raw-data-container" class="hidden mb-6 text-left">
+                <label class="block text-xs font-semibold text-slate-500 mb-1">JSON 數據（若無法下載，可直接全選複製此框內文字）：</label>
+                <textarea id="raw-json-textarea" readonly class="w-full h-40 p-3 text-xs font-mono bg-slate-900 text-emerald-400 rounded-xl border border-slate-700 outline-none select-all"></textarea>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-left space-y-2">
+                <h3 class="font-bold text-slate-800 text-xs">分析步驟：</h3>
+                <ol class="list-decimal list-inside text-xs text-slate-600 space-y-1.5 leading-relaxed">
+                    <li>下載或複製您的 JSON 測驗結果。</li>
+                    <li>將測驗網址發送給伴侶/朋友填寫。</li>
+                    <li>將兩人的 JSON 內容發送給 AI，即可獲得深度比對報告！</li>
+                </ol>
+            </div>
+            
+            <button onclick="clearDraftAndStartNew()" class="mt-6 text-xs text-slate-400 hover:text-slate-600 underline">重新進行一次測驗</button>
         </div>
 
     </main>
 
     <script>
+        const STORAGE_KEY = "values_quiz_draft_v1";
+
         const dimensions = [
             {
                 name: "1. 人生觀",
@@ -231,7 +262,63 @@
 
         let currentStep = 0;
         let userName = "";
-        const userAnswers = {};
+        let userAnswers = {};
+
+        // Auto-check for draft on load
+        window.addEventListener("DOMContentLoaded", () => {
+            const savedDraft = localStorage.getItem(STORAGE_KEY);
+            if (savedDraft) {
+                try {
+                    const draftObj = JSON.parse(savedDraft);
+                    if (draftObj.userName && draftObj.userAnswers) {
+                        const answeredCount = Object.keys(draftObj.userAnswers).length;
+                        document.getElementById("resume-info").innerText = `上次填寫者：${draftObj.userName}｜目前進度：已回答 ${answeredCount} / 75 題（面向 ${draftObj.currentStep + 1}）`;
+                        document.getElementById("resume-card").classList.remove("hidden");
+                    }
+                } catch (e) {
+                    localStorage.removeItem(STORAGE_KEY);
+                }
+            }
+        });
+
+        function saveProgressToStorage() {
+            const draftData = {
+                userName: userName,
+                currentStep: currentStep,
+                userAnswers: userAnswers,
+                updatedAt: new Date().toISOString()
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(draftData));
+        }
+
+        function resumeQuiz() {
+            const savedDraft = localStorage.getItem(STORAGE_KEY);
+            if (savedDraft) {
+                const draftObj = JSON.parse(savedDraft);
+                userName = draftObj.userName;
+                currentStep = draftObj.currentStep || 0;
+                userAnswers = draftObj.userAnswers || {};
+                
+                document.getElementById("user-name").value = userName;
+                document.getElementById("resume-card").classList.add("hidden");
+                document.getElementById("intro-card").classList.add("hidden");
+                document.getElementById("quiz-container").classList.remove("hidden");
+                document.getElementById("step-indicator").classList.remove("hidden");
+                document.getElementById("progress-container").classList.remove("hidden");
+                renderStep();
+            }
+        }
+
+        function clearDraftAndStartNew() {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+
+        function restartConfirm() {
+            if (confirm("確定要重新開始嗎？未儲存的回答將會被清除。")) {
+                clearDraftAndStartNew();
+            }
+        }
 
         function startQuiz() {
             const input = document.getElementById("user-name").value.trim();
@@ -240,6 +327,9 @@
                 return;
             }
             userName = input;
+            saveProgressToStorage();
+
+            document.getElementById("resume-card").classList.add("hidden");
             document.getElementById("intro-card").classList.add("hidden");
             document.getElementById("quiz-container").classList.remove("hidden");
             document.getElementById("step-indicator").classList.remove("hidden");
@@ -270,15 +360,15 @@
                 let html = `<p class="font-medium text-slate-800 text-sm mb-4"><span class="text-indigo-600 font-bold mr-1">Q${globalQIndex}.</span> ${qText}</p>`;
                 html += `<div class="grid grid-cols-5 gap-2 text-center">`;
                 
-                const labels = ["1\n非常不同意", "2\n不同意", "3\n普通", "4\n同意", "5\n非常同意"];
+                const labels = ["非常不同意", "不同意", "普通", "同意", "非常同意"];
                 
                 for (let i = 1; i <= 5; i++) {
                     const checked = selectedVal == i ? "checked" : "";
                     html += `
                         <div>
                             <input type="radio" id="${qKey}_${i}" name="${qKey}" value="${i}" class="option-btn hidden" ${checked} onchange="saveAnswer('${qKey}', ${i})">
-                            <label for="${qKey}_${i}" class="block py-2.5 px-1 text-xs border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50 transition leading-tight whitespace-pre-line font-medium text-slate-600">
-                                ${i}<span class="block text-[10px] text-slate-400 mt-1 scale-90 transform">${labels[i-1].split('\n')[1]}</span>
+                            <label for="${qKey}_${i}" class="block py-2.5 px-1 text-xs border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50 transition leading-tight font-medium text-slate-600">
+                                ${i}<span class="block text-[10px] text-slate-400 mt-1 scale-90 transform">${labels[i-1]}</span>
                             </label>
                         </div>
                     `;
@@ -315,6 +405,7 @@
 
         function saveAnswer(qKey, val) {
             userAnswers[qKey] = val;
+            saveProgressToStorage();
         }
 
         function changeStep(delta) {
@@ -331,6 +422,7 @@
             }
 
             currentStep += delta;
+            saveProgressToStorage();
 
             if (currentStep >= dimensions.length) {
                 showResults();
@@ -366,25 +458,64 @@
             document.getElementById("progress-bar").style.width = "100%";
             document.getElementById("quiz-container").classList.add("hidden");
             document.getElementById("result-card").classList.remove("hidden");
+            
+            // Prepare raw JSON in textarea as fallback
+            const exportObj = generateExportData();
+            document.getElementById("raw-json-textarea").value = JSON.stringify(exportObj, null, 2);
+            
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        // Improved Mobile Blob Download
         function downloadJSON() {
             const exportObj = generateExportData();
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `${userName}_價值觀測驗結果.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
+            const jsonString = JSON.stringify(exportObj, null, 2);
+            
+            // Create Blob with explicit MIME type
+            const blob = new Blob([jsonString], { type: "application/json;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            
+            const downloadLink = document.createElement("a");
+            downloadLink.href = url;
+            downloadLink.download = `${userName || '使用者'}_價值觀測驗結果.json`;
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
         function copyJSONToClipboard() {
             const exportObj = generateExportData();
-            navigator.clipboard.writeText(JSON.stringify(exportObj, null, 2)).then(() => {
-                alert("已將 JSON 結果複製到剪貼簿！");
-            });
+            const text = JSON.stringify(exportObj, null, 2);
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert("已成功將 JSON 結果複製到剪貼簿！");
+                }).catch(() => {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            toggleRawData(true);
+            const textarea = document.getElementById("raw-json-textarea");
+            textarea.select();
+            document.execCommand("copy");
+            alert("已全選並複製 JSON 文字！");
+        }
+
+        function toggleRawData(forceShow = false) {
+            const container = document.getElementById("raw-data-container");
+            if (forceShow || container.classList.contains("hidden")) {
+                container.classList.remove("hidden");
+            } else {
+                container.classList.add("hidden");
+            }
         }
     </script>
 </body>
