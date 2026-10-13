@@ -98,6 +98,19 @@
                 </div>
             </div>
 
+            <!-- 文字分析摘要 -->
+            <div id="text-summary-box" class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-3">
+                <h4 class="font-bold text-slate-800 text-sm border-b border-slate-200 pb-2">📊 文字分析摘要</h4>
+                <div>
+                    <span class="font-bold text-emerald-600">🟢 最具默契面向（相似度最高）：</span>
+                    <p id="top-match-text" class="text-slate-600 mt-1"></p>
+                </div>
+                <div>
+                    <span class="font-bold text-amber-600">🟠 需多磨合面向（分歧最大）：</span>
+                    <p id="top-focus-text" class="text-slate-600 mt-1"></p>
+                </div>
+            </div>
+
             <h3 class="font-bold text-slate-800 text-sm mb-3">15 大面向契合度分析</h3>
             <div id="dimension-breakdown" class="space-y-3 mb-6"></div>
 
@@ -111,7 +124,7 @@
     </main>
 
     <script>
-        const STORAGE_KEY = "values_quiz_draft_v3";
+        const STORAGE_KEY = "values_quiz_draft_v4";
 
         const dimensions = [
             { name: "1. 人生觀", questions: ["人生的主要意義在於追求個人的自我實現與快樂。", "面對未知的未來，我傾向順其自然而非精確規劃。", "即使過程充滿痛苦，只要目標有價值就值得堅持。", "我認為人生的成功很大程度取決於個人努力而非運氣。", "生命短暫，當下的體驗比未來的長遠目標更重要。"] },
@@ -119,7 +132,7 @@
             { name: "3. 道德與是非觀", questions: ["為了保護珍視的人，有時違背客觀原則是可以接受的。", "事情的對錯取決於結果是否良好，而非過程是否合乎規則。", "即使沒有人知道，我也會嚴格遵守自己的道德底線。", "我相信「惡有惡報，善有善報」的道德因果律。", "在重大道德議題上，我不輕易妥協自己的立場。"] },
             { name: "4. 社會與公平觀", questions: ["社會應該優先保障弱者，即使這意味著犧牲部分個人的效率。", "個人財富的差異主要是能力與努力的體現，社會不應過度介入再分配。", "我願意為了群體利益或社會正義做出個人時間或金錢的奉獻。", "法規與秩序比個人自由更能維護社會的長治久安。", "任何形式的歧視與不平等都必須被積極糾正。"] },
             { name: "5. 家庭觀", questions: ["原生家庭的期待與需求應該優先於個人的部分生涯選擇。", "成立屬於自己的家庭（如結婚、育兒）是我人生重要的目標。", "與長輩意見不合時，我傾向順從以維持家庭和諧。", "逢年過節與家庭聚會是維系情感不可或缺的義務。", "伴侶與自己的新家庭應該高於原生家庭的干涉與需求。"] },
-            { name: "6. 友情與人際觀", questions: ["知心朋友不在多，兩三個能深刻交流的就夠了。", "朋友之間應該坦誠相待，即使實話可能令人難過。", "在人際關係中，保持適當距離比密切互動更能維持長久。", "當朋友做出不合情理的事時，我會主動指出而不是無條件支持。", "拓展人脈與社交圈對事業與生活有不可或缺的價值。"] },
+            { name: "6. 友情與人際觀", questions: ["知心朋友不在多，兩三個能深刻交流的就夠了。", "朋友之間應該坦誠相待，即使實話可能令人難過。", "在人際關係中，保持適當距離比密切互動更能維繫長久。", "當朋友做出不合情理的事時，我會主動指出而不是無條件支持。", "拓展人脈與社交圈對事業與生活有不可或缺的價值。"] },
             { name: "7. 工作與事業觀", questions: ["工作只是獲取生活資金的手段，不必追求熱情與天職。", "我願意為了事業突破與成就，犧牲部分個人休閒與休假。", "相較於穩定的工作，我更偏好高風險但高報酬的挑戰。", "下班後的個人時間不應該處理任何工作事務。", "在職場中，獲得同仁與主管的認同對我非常重要。"] },
             { name: "8. 生活方式與享樂觀", questions: ["生活應該保持規律與秩序，才能維持身心健康的平衡。", "嘗試新鮮、冒險或未知的體驗是生活不可或缺的樂趣。", "相比於擁有很多物質產品，我更重視累積美好的生活體驗（如旅遊、展演）。", "在極端忙碌後，我需要完全獨處來恢復精力，而非社交。", "對生活細節（如居住環境、飲食質感）有高標準的追求是必要的。"] },
             { name: "9. 自由與個人界線", questions: ["即使在最親密關係中，每個人也應保有絕對私密的情感與空間。", "我很難對別人的請求說「不」，經常因此承擔額外負擔。", "他人對我的評價與眼光會顯著影響我的選擇與心情。", "我習慣獨立解決問題，極少主動尋求他人的協助。", "當他人侵犯我的個人界線時，我會當場明確表達拒絕。"] },
@@ -142,6 +155,7 @@
             const p1Data = urlParams.get('p1');
             const p2Data = urlParams.get('p2');
 
+            // If link contains BOTH p1 and p2 -> Directly load permanent report
             if (p1Data && p2Data) {
                 try {
                     partnerData = JSON.parse(decodeURIComponent(escape(atob(p1Data))));
@@ -152,6 +166,7 @@
                 } catch(e) { console.error("Invalid Permanent Link", e); }
             }
 
+            // If link contains only p1 -> Person B takes quiz
             if (p1Data) {
                 try {
                     partnerData = JSON.parse(decodeURIComponent(escape(atob(p1Data))));
@@ -340,6 +355,15 @@
             document.getElementById("match-score").innerText = `${totalMatchPct}%`;
             document.getElementById("match-desc").innerText = totalMatchPct >= 80 ? "價值觀高度契合，擁有堅實的心靈默契！" : totalMatchPct >= 65 ? "大部分核心議題一致，部分面向具備良好的互補性。" : "存在多個深層價值觀分歧，需要更多傾聽與溝通。";
 
+            // 文字簡報摘要邏輯
+            const sortedByMatch = [...dimBreakdown].sort((a, b) => b.pct - a.pct);
+            const topMatches = sortedByMatch.slice(0, 3).map(d => `${d.name} (${d.pct}%)`).join('、');
+            const topFocuses = sortedByMatch.slice(-3).reverse().map(d => `${d.name} (${d.pct}%)`).join('、');
+
+            document.getElementById("top-match-text").innerText = topMatches;
+            document.getElementById("top-focus-text").innerText = topFocuses;
+
+            // 繪製 15 面向長條圖
             const container = document.getElementById("dimension-breakdown");
             container.innerHTML = "";
             dimBreakdown.forEach(item => {
@@ -358,13 +382,16 @@
             });
         }
 
+        // 修正：確保產生帶有 ?p1=...&p2=... 的雙人永久紀念網址
         function copyPermanentReportLink() {
             const str1 = btoa(unescape(encodeURIComponent(JSON.stringify(partnerData))));
             const str2 = btoa(unescape(encodeURIComponent(JSON.stringify(partnerDataB))));
             const permUrl = `${window.location.origin}${window.location.pathname}?p1=${str1}&p2=${str2}`;
 
             navigator.clipboard.writeText(permUrl).then(() => {
-                alert("已複製「雙人永久紀念連結」！你們兩人隨時點開此連結都能重溫報告！");
+                alert("已成功複製「雙人永久紀念連結」！你們兩人隨時點開此連結都能直接看到報告。");
+            }).catch(() => {
+                prompt("請複製以下永久紀念連結：", permUrl);
             });
         }
 
